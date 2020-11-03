@@ -1,8 +1,12 @@
 
+
 #############
 #
 #  usage:	
-#	docker <server_ip> 
+#		
+#	docker -g|--generate <IP_ADDRESS>
+#	docker -c|--clean
+# 	docker -i|--install <IP_ADDRESS> 
 #
 #	This script uses the functions in ssl_functions.sh
 #	It creates all the infrastructure for creating a protected docker 
@@ -16,9 +20,10 @@
 #	Server files needs to be sent to the server along with the ca.cert
 #	Client files needs to be sent to the client along with the ca.cert
 #
-#################3
+#################
 
 
+#!/bin/bash
 
 . ssl_functions.sh
 
@@ -42,6 +47,7 @@ function generate_ca() {
 }
 
 function generate_server_cert() {
+	local IP=$1
 	echo "--- Generate Server Certificate --- "
 	generate_private_key $SERVER_KEY_FILE
 	echo "subjectAltName=IP:${IP}" >> $EXT_FILE
@@ -57,24 +63,62 @@ function generate_client_cert() {
 }
 
 
-function delete_all() {
+function clean_all() {
 	rm $SERVER_CERT_FILE $SERVER_CSR_FILE $SERVER_KEY_FILE $CLIENT_CERT_FILE $CLIENT_CSR_FILE $CLIENT_KEY_FILE $CA_KEY_FILE $CA_CERT_FILE $EXT_FILE
 	
 }
 
-IP=$1
+function generate_files() {
+	local IP=$1
+	generate_ca
+	generate_server_cert $IP
+	generate_client_cert
 
-if [ -z $1 ]; then
-	echo "Usage: docker.sh <SERVER_IP>"
-	exit
-elif [ $1 == "delete" ]; then
-	delete_all
-	exit
-fi
+}
 
-generate_ca
-generate_server_cert
-generate_client_cert
+function install_on_server() {
+	local user_ip=$1
+	local path=$2
+	scp $SERVER_CERT_FILE $SERVER_KEY_FILE $CA_CERT_FILE $user_ip:$path
+}
+
+while [ -n "$1" ]; do
+	case "$1" in
+	
+	-c|--clean) 
+	clean_all
+	shift
+	;;
+	
+	-g|--generate) 
+	if [ -z "$2" ]; then
+		echo "Usage: docker.sh -g <IP>"
+		exit
+	fi
+	generate_files $2
+	
+	shift
+	shift
+	;;
+	
+	-i|--install)
+	if [ -z "$2" -o -z "$3" ]; then
+		echo "Usage: docker.sh -i <USER>@<IP> <PATH>"
+		exit
+	fi
+	
+	install_on_server $2 $3
+	shift
+	shift
+	shift
+	;;
+	*)
+	shift
+	;;
+	
+	esac
+
+done
 
 
 
