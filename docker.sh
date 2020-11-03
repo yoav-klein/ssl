@@ -56,16 +56,25 @@ function generate_client_cert() {
 	sign_request $CLIENT_CSR_FILE $CA_CERT_FILE $CA_KEY_FILE $CLIENT_CERT_FILE
 }
 
+
+function delete_all() {
+	rm $SERVER_CERT_FILE $SERVER_CSR_FILE $SERVER_KEY_FILE $CLIENT_CERT_FILE $CLIENT_CSR_FILE $CLIENT_KEY_FILE $CA_KEY_FILE $CA_CERT_FILE $EXT_FILE
+	
+}
+
 IP=$1
 
 if [ -z $1 ]; then
 	echo "Usage: docker.sh <SERVER_IP>"
 	exit
+elif [ $1 == "delete" ]; then
+	delete_all
+	exit
 fi
 
 generate_ca
-
 generate_server_cert
-
 generate_client_cert
+
+
 

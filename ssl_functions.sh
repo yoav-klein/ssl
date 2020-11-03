@@ -49,8 +49,16 @@ function sign_request() {
 	name=$4
 	ext_file=$5
 	
-	openssl x509 -req -days 365 -sha256 -in $request -CA $ca -CAkey $ca_key \
-	-CAcreateserial -out $name -extfile $ext_file
+	if [[ -n $ext_file ]]; then
+		echo "--- Extension file specified ---"
+		echo ${#ext_file}
+		echo $ext_file
+		openssl x509 -req -days 365 -sha256 -in $request -CA $ca -CAkey $ca_key \
+		-CAcreateserial -out $name -extfile $ext_file
+	else
+		openssl x509 -req -days 365 -sha256 -in $request -CA $ca -CAkey $ca_key \
+		-CAcreateserial -out $name
+	fi
 }
 
 
