@@ -1,46 +1,60 @@
 
-
+#############
 # usage:
 #	generate_private_key <name>
 #	
-#
-function generate_private_key() {
+#############
+function gen_private_key() {
 	local name=$1
-	openssl genrsa -out $name 4096
+	
+	if [ -z "$name" ]; then
+		echo "Usage: gen_private_key <name>"
+		return
+	fi
+	openssl genrsa -out $name
 }
 
+###############
 # usage:
-#	generate_ca_cert <keyfile> <cacertfile_name>
+#	generate_ca_cert <name>
 #	
-#
+###############
+
 function generate_ca_cert() {
-	local key_name=$1
-	local cert_name=$2
+	local cert_name=$1
+	local key_name="ca.key"
+	
+	if [ -z "$cert_name" ]; then
+		echo "Usage: generate_ca_cert <certificate_name>"
+		return
+	fi
+	generate_private_key $key_name
 	openssl req -new -x509 -days 365 -key $key_name -sha256 -out $cert_name
 }
 
+##############
 # usage: 
 #	issue_request <private_key> <csr_file_name>
 #
 #
-
-function issue_request() {
+###############
+function gen_sign_request() {
 	local key=$1
 	local name=$2
-	local host=$3
 	
-	if [ -z $1 -o -z $2 -o -z $3 ]; then
-		echo "sign_request <key> <name> <host>"
+	if [ -z "$key" ] || [ -z "$name" ]; then
+		echo "Usage: sign_request <key> <name>"
 		return
 	fi
 	
 	openssl req -new -sha256  -key $key -out $name
 }
 
+############
 # usage:
 #	sign_request <request.csr> <ca.cert> <ca.key> <certfile> <extensions_file>
 #
-#
+#############
 
 function sign_request() {
 	request=$1
@@ -61,5 +75,34 @@ function sign_request() {
 	fi
 }
 
-
+function gen_server_certificate() {
+	name=$1
+	ca_cert=$2
+	ca_key=$3
+	if [ -z "$name" ]; then
+		echo "Usage: gen_server_certificate <name>"
+		return
+	fi
+	
+	if [ -z "$ca_cert" ] || [ -z "$ca_key" ]; then
+		echo "no CA certificate OR key supplied, creating CA"
+		ca_cert="ca.crt"
+		ca_key="ca.key"
+		generate_ca_cert $ca_cert
+		if [ ! -e $ca_cert ]; then
+			echo "FAILED to create CA certificate"
+			return
+		fi
+	elif [ ! -e "$ca_cert" ] || [ ! -e "$ca_key" ]; then
+		echo "$ca_cert OR $ca_key not found.."
+		return
+	fi
+	
+	gen_private_key server.key
+	gen_sign_request server.key server.csr
+	sign_request server.csr $ca_cert $ca_key $name
+	
+	rm *.csr
+			
+}
 
