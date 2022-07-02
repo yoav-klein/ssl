@@ -1,15 +1,15 @@
 
 ##### Log functions ####
-log_success() {
+ssl_log_success() {
     [ -n "$1" ] && [ -n "$2" ] && echo -e "\e[32;1m=== ssl_commons::$1: $2 \e[0m"
 }
 
 
-log_error() {
+ssl_log_error() {
     [ -n "$1" ] && [ -n "$2" ] &&  echo -e "\e[31;1m=== ssl_commons::$1: $2 \e[0m"
 }
 
-log() {
+ssl_log() {
     [ -n "$1" ] && [ -n "$2" ] && echo "---> ssl_commons::$1: $2"
 }
 
@@ -29,7 +29,7 @@ function gen_private_key() {
         return
     fi
     openssl genrsa -out $name > /dev/null 2>&1
-    log_success "Generated private key $name"
+    ssl_log_success "Generated private key $name"
 }
 
 ###############
@@ -54,17 +54,17 @@ function gen_ca_cert() {
 
     gen_private_key $key_name
     if [ -z "$1" ]; then
-        log "gen_ca_cert" "No config file"
+        ssl_log "gen_ca_cert" "No config file"
         openssl req -new -x509 -days 365 -key $key_name -sha256 -out $cert_name
     else
-        log "gen_ca_cert" "generating with config file"
+        ssl_log "gen_ca_cert" "generating with config file"
         openssl req -new -x509 -days 365 -key $key_name -config $config -out $cert_name
     fi
     if [ $? = 0 ]; then
-        log_success "gen_ca_cert" "SUCCESSFULLY generated CA certificate"
+        ssl_log_success "gen_ca_cert" "SUCCESSFULLY generated CA certificate"
         return 0
     else
-        log_error "gen_ca_cert" "Failed generating CA certificate"
+        ssl_log_error "gen_ca_cert" "Failed generating CA certificate"
         return 1
     fi
 }
@@ -90,22 +90,22 @@ function gen_sign_request() {
     local name=$2
     local config=$3
     if [ -z "$key" ] || [ -z "$name" ]; then
-    	log_error "gen_sign_request" "Usage: sign_request <key> <name> [config_file]"
+    	ssl_log_error "gen_sign_request" "Usage: sign_request <key> <name> [config_file]"
     	return 1
     fi
     
     if [ -n "$config" ]; then
-        log "gen_sign_request" "with config file"
+        ssl_log "gen_sign_request" "with config file"
         openssl req -new -key $key -out $name -config $config
     else
-        log "gen_sign_request" "no config file"
+        ssl_log "gen_sign_request" "no config file"
         openssl req -new -sha256 -key $key -out $name
     fi
     if [ $? = 0 ]; then
-        log_success "gen_sign_request" "SUCCESSFULLY generated CSR $name"
+        ssl_log_success "gen_sign_request" "SUCCESSFULLY generated CSR $name"
         return 0
     else
-        log_error "gen_sign_request ""FAILED generating CSR $name"
+        ssl_log_error "gen_sign_request ""FAILED generating CSR $name"
         return 1
     fi
 }
@@ -135,14 +135,14 @@ function sign_request() {
     
     
     if [ ! -e "$ca" ] || [ ! -e "$ca_key" ] || [ ! -e "$csr" ] || [ -z "$name" ]; then
-        log_error "sign_request" "Usage: sign_request <csr> <ca_certificate> <ca_key> <certificate_name> [extension_file]"
+        ssl_log_error "sign_request" "Usage: sign_request <csr> <ca_certificate> <ca_key> <certificate_name> [extension_file]"
         return
     fi
     
     if [ -n "$ext_file" ]; then
-        log "sign_request" "Extension file specified"
+        ssl_log "sign_request" "Extension file specified"
         if [ ! -f $ext_file ] || [ -z "$extensions"  ]; then
-            log_error "sign_request" "extension file wasn't found, or extensions not given"
+            ssl_log_error "sign_request" "extension file wasn't found, or extensions not given"
     	    return
         fi
     	
@@ -154,9 +154,9 @@ function sign_request() {
     fi
 
     if [ $? = 0 ]; then
-        log_success "sign_request" "SUCCESSFULLY signed request and generated $name"
+        ssl_log_success "sign_request" "SUCCESSFULLY signed request and generated $name"
     else
-        log_error "sign_request" "couldn't sign request"
+        ssl_log_error "sign_request" "couldn't sign request"
         exit 1
     fi
 }
