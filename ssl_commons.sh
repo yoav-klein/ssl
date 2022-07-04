@@ -39,7 +39,7 @@ function gen_private_key() {
 #    Generates a CA certificate	
 #
 #   USAGE: 
-#       gen_ca_cert [config_file]
+#       gen_ca_cert [path] [config_file]
 #   
 #   RETURNS
 #       0 on success
@@ -47,18 +47,22 @@ function gen_private_key() {
 #
 ###############
 
-function gen_ca_cert() {
-    local cert_name="ca.crt"
-    local key_name="ca.key"
-    local config=$1
-
-    gen_private_key $key_name
-    if [ -z "$1" ]; then
+function gen_ca_cert() {  
+    local path=$1
+    if [ -z "$path" ]; then
+        path="."
+    fi
+    
+    local cert_path="$path/ca.crt"
+    local key_path="$path/ca.key"
+    local config=$2
+    gen_private_key $key_path
+    if [ -z "$config" ]; then
         ssl_log "gen_ca_cert" "No config file"
-        openssl req -new -x509 -days 365 -key $key_name -sha256 -out $cert_name
+        openssl req -new -x509 -days 365 -key $key_path -sha256 -out $cert_path
     else
         ssl_log "gen_ca_cert" "generating with config file"
-        openssl req -new -x509 -days 365 -key $key_name -config $config -out $cert_name
+        openssl req -new -x509 -days 365 -key $key_path -config $config -out $cert_path
     fi
     if [ $? = 0 ]; then
         ssl_log_success "gen_ca_cert" "SUCCESSFULLY generated CA certificate"
