@@ -139,7 +139,7 @@ function sign_request() {
     
     
     if [ ! -e "$ca" ] || [ ! -e "$ca_key" ] || [ ! -e "$csr" ] || [ -z "$name" ]; then
-        ssl_log_error "sign_request" "Usage: sign_request <csr> <ca_certificate> <ca_key> <certificate_name> [extension_file]"
+        ssl_log_error "sign_request" "Usage: sign_request <csr> <ca_certificate> <ca_key> <certificate_name> [extension_file <extension_section>]"
         return 1
     fi
     
