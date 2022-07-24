@@ -28,7 +28,7 @@ function gen_private_key() {
         echo "Usage: gen_private_key <name>"
         return
     fi
-    openssl genrsa -out $name > /dev/null 2>&1
+    openssl genrsa -out $name > /dev/null || ssl_log_error "gen_private_key" "Failed to generate $name" &&  return 1
     ssl_log_success "Generated private key $name"
 }
 
