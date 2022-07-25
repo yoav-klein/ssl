@@ -1,4 +1,5 @@
 
+
 ##### Log functions ####
 ssl_log_success() {
     [ -n "$1" ] && [ -n "$2" ] && echo -e "\e[32;1m=== ssl_commons::$1: $2 \e[0m"
@@ -137,11 +138,11 @@ function sign_request() {
     local ext_file=$5
     local extensions=$6
     
+    [ -f "$ca" ] || { ssl_log_error "sign_request" "$ca not found" && return 1; }
+    [ -f "$ca_key" ] || { ssl_log_error "sign_request" "$ca_key not found" && return 1; }
+    [ -f "$csr" ] || { ssl_log_error "sign_request" "$csr not found" && return 1; }
+    [ -n "$name" ] || { ssl_log_error "sign_request" "Usage: sign_request <csr> <ca_certificate> <ca_key> <certificate_name> [extension_file <extension_section>]" && return 1; }
     
-    if [ ! -e "$ca" ] || [ ! -e "$ca_key" ] || [ ! -e "$csr" ] || [ -z "$name" ]; then
-        ssl_log_error "sign_request" "Usage: sign_request <csr> <ca_certificate> <ca_key> <certificate_name> [extension_file <extension_section>]"
-        return 1
-    fi
     
     if [ -n "$ext_file" ]; then
         ssl_log "sign_request" "Extension file specified"
