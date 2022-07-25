@@ -49,13 +49,11 @@ function gen_private_key() {
 ###############
 
 function gen_ca_cert() {  
-    local path=$1
-    if [ -z "$path" ]; then
-        path="."
-    fi
+    local name=$1
+    [ -n "$name" ] || { ssl_log_error "gen_ca_cert" "Usage: gen_ca_cert <name>" && return 1;  } 
     
-    local cert_path="$path/ca.crt"
-    local key_path="$path/ca.key"
+    local cert_path="$name.crt"
+    local key_path="$name.key"
     local config=$2
     gen_private_key $key_path
     if [ -z "$config" ]; then
