@@ -135,6 +135,8 @@ function sign_request() {
     local ext_file=$5
     local extensions=$6
     
+    [ -z "$csr" ] || [ -z "$ca" ] || [ -z "$ca_key" ] || [ -z "$name" ] && \
+        {  echo "Usage: sign_request <csr> <ca> <ca_key> <certificate_name>"; return 1; }
     [ -f "$ca" ] || { ssl_log_error "sign_request" "$ca not found" && return 1; }
     [ -f "$ca_key" ] || { ssl_log_error "sign_request" "$ca_key not found" && return 1; }
     [ -f "$csr" ] || { ssl_log_error "sign_request" "$csr not found" && return 1; }
