@@ -61,13 +61,41 @@ $ docker cp server.crt <containername>:/certs
 ### Configure nginx to use a certificate
 Now let's configure nginx to use a server certificate
 
-Open the `/etc/nginx/conf.d/default.conf`, and add to the `server` section the following lines:
+You need to add to the nginx configuration the following context:
 ```
-listen 443 # instead of 80
-ssl on;
-ssl_certificate /certs/server.crt;
-ssl_certificate_key /certs/server.key;
+server {
+    listen 443 ssl;
+    server_name your_domain.com www.your_domain.com;
+
+    ssl_certificate /etc/ssl/certs/server.crt;
+    ssl_certificate_key /etc/ssl/certs/server.key;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # HSTS
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # OCSP Stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 8.8.8.8 8.8.4.4 valid=300s;
+    resolver_timeout 5s;
+
+
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
 ```
+
+Remind you - this `server` context should be inside a `http` context. So usually you have the `http` context in the `/etc/nginx/nginx.conf` which includes 
+all files in `/etc/nginx/conf.d/`, so just create a file there and put the above content inside
+
 
 ### Run the server
 Now run the server in the container:
