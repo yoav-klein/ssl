@@ -90,16 +90,18 @@ def find_cert_by_cn(cn: str, path: str):
 
 
 def find_cert_in_bundle(cn: str, path: str):
+    count = 0
     cert_list = read_bundle(path)
     for cert_data in cert_list:
         cert = extract_certificate_data(cert_data)
-        subject = ['cert.subject']
+        subject = cert['subject']
         for rdn in subject:
             if rdn.rfc4514_attribute_name == "CN":
                 if rdn.value == cn:
-                    count+=1
+                    count += 1
                     display_cert(cert)
-                    
+
+    print(f"Found: {count}")        
 
 
 def display_list(path: str):
