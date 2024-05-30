@@ -3,7 +3,7 @@ A utility script that can help you:
 
 - Print list of all certificates in a directory
 - Find all certificates for a specific CN in a directory
-
+- Find all certificates for a specific CN in a certificate bundle (useful for searching in /etc/ssl/certs/ca-certificates.crt)
 
 """
 
