@@ -14,6 +14,8 @@ import os
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
+SEPARATOR = "================="
+
 def read_bundle(cert_file):
     with open(cert_file, 'rb') as f:
         cert_data = f.read()
@@ -74,59 +76,61 @@ def display_cert(cert):
     print(f"Not after: {cert['not_valid_after']}")
 
 
-def find_cert_by_cn(cn: str, path: str):
+def find_cert_by_cn(cn: str, path: str, repository_type: str):
     count = 0
-    cert_list = list_certificates_in_dir(path)
-    for cert in cert_list:
-        subject = cert[1]['subject']
-        for rdn in subject:
-            if rdn.rfc4514_attribute_name == "CN":
-                if rdn.value == cn:
-                    count+=1
-                    display_cert(cert[1])
-                    print(f"file: {cert[0]}")
+    if(repository_type == "dir"):
+        cert_list = list_certificates_in_dir(path)
+        for cert in cert_list:
+            subject = cert[1]['subject']
+            for rdn in subject:
+                if rdn.rfc4514_attribute_name == "CN":
+                    if rdn.value == cn:
+                        count+=1
+                        print(f"file: {cert[0]}")
+                        display_cert(cert[1])
+    
+    if(repository_type == "bundle"):
+        cert_list = read_bundle(path)
+        for cert_data in cert_list:
+            cert = extract_certificate_data(cert_data)
+            subject = cert['subject']
+            for rdn in subject:
+                if rdn.rfc4514_attribute_name == "CN":
+                    if rdn.value == cn:
+                        count += 1
+                        display_cert(cert)
 
-    print(f"Found: {count}")
-
-
-def find_cert_in_bundle(cn: str, path: str):
-    count = 0
-    cert_list = read_bundle(path)
-    for cert_data in cert_list:
-        cert = extract_certificate_data(cert_data)
-        subject = cert['subject']
-        for rdn in subject:
-            if rdn.rfc4514_attribute_name == "CN":
-                if rdn.value == cn:
-                    count += 1
-                    display_cert(cert)
-
-    print(f"Found: {count}")        
+    print(f"Found: {count} matching certificates")
 
 
-def display_list(path: str):
-    cert_list = list_certificates_in_dir(path)
-    for cert in cert_list:
-        print("=====")
-        display_cert(cert[1])
-
+def display_list(path: str, repository_type: str):
+    if(repository_type == "dir"):
+        cert_list = list_certificates_in_dir(path)
+        for cert in cert_list:
+            print(SEPARATOR)
+            print(f"File: {cert[0]}")
+            display_cert(cert[1])
+            
+    if(repository_type == "bundle"):
+        cert_list = read_bundle(path)
+        for cert_data in cert_list:
+            cert = extract_certificate_data(cert_data)
+            print(SEPARATOR)
+            display_cert(cert)
+        
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="SSL Diagnostics Tool")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Choose a command")
 
-    list_parser = subparsers.add_parser("list-certs", help="List certificates in directory")
+    list_parser = subparsers.add_parser("list-certs", help="List certificates")
     list_parser.add_argument("--path", type=str, help="Path to directory", required=True)
+    list_parser.add_argument("--type", choices=["dir", "bundle"], help="Type of certificate repository", required=True)
 
     find_cert_parser = subparsers.add_parser("find-cert", help="Find certificate in directory")
     find_cert_parser.add_argument("--cn", type=str, help="CN to find", required=True)
     find_cert_parser.add_argument("--path", type=str, help="Path to directory", required=True)
-
-    find_cert_parser1 = subparsers.add_parser("find-cert-in-bundle", help="Find certificate in directory")
-    find_cert_parser1.add_argument("--cn", type=str, help="CN to find", required=True)
-    find_cert_parser1.add_argument("--path", type=str, help="Path to bundle", required=True)
-
-
+    find_cert_parser.add_argument("--type", choices=["dir", "bundle"], help="Type of certificate repository", required=True)
 
     return parser.parse_args()
 
@@ -134,14 +138,12 @@ def main():
     args = parse_arguments()
 
     if args.command == "list-certs":
-        display_list(args.path)
+        display_list(args.path, args.type)
 
     if args.command == "find-cert":
-        find_cert_by_cn(args.cn, args.path)
-
-    if args.command == "find-cert-in-bundle":
-        find_cert_in_bundle(args.cn, args.path)
+        find_cert_by_cn(args.cn, args.path, args.type)
 
 
 if __name__ == "__main__":
     main()
+
